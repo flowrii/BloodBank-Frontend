@@ -1,5 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import api from "./api";
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 function AppointmentForm({ appointment, donationCenters, handleSubmit, handleCancel }) {
     const [donorID, setDonorID] = useState(appointment?.donorID ?? '');
@@ -54,10 +59,12 @@ function AppointmentForm({ appointment, donationCenters, handleSubmit, handleCan
         handleCancel();
     };
 
-    const isDateAvailable = () => {
+    const isDateAvailable = (date) => {
+        let formattedDate=dayjs(date).format('YYYY-MM-DDTHH:mm:ss');
         const maxAppointments = maxApp;
-        const appointmentsOnDate = appointments.filter((app) => app.date.slice(0,10) === date.slice(0,10));
-        return appointmentsOnDate.length < maxAppointments;
+        console.log("DATAAAA", date)
+        const appointmentsOnDate = appointments.filter((app) => app.date.slice(0,10) === formattedDate.slice(0,10));
+        return (appointmentsOnDate.length < maxAppointments) && (date.getDay() !== 0) && (date.getDay() !== 6);
     };
 
     return (
@@ -84,21 +91,19 @@ function AppointmentForm({ appointment, donationCenters, handleSubmit, handleCan
                     <label>
                         Date:
                     </label>
-                    <input type="datetime-local"
-                           value={date}
-                           onChange={(e) => {
-                               setDate(e.target.value);
-                           }}
-                           onFocus={() => {
-                               if (!isDateAvailable()) {
-                                   setDate('');
-                                   alert('This date is unavailable. Please choose another date.');
-                               }
-                           }}
-                           min={new Date().toISOString().slice(0, 16)}
-                           required
-                           disabled={!isDateAvailable()}
-                    />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DemoContainer components={['DatePicker']}>
+                            <DatePicker
+                                defaultValue = {dayjs(new Date().toISOString().split("T")[0])}
+                                minDate={dayjs()}
+                                shouldDisableDate={(e)=>!isDateAvailable(e.$d)}
+                                onChange={(e) => {
+                                    setDate(dayjs(e.$d).format('YYYY-MM-DDTHH:mm:ss'));
+                                }}
+
+                            />
+                        </DemoContainer>
+                    </LocalizationProvider>
                 </>
             )}
 
