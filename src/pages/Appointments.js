@@ -7,13 +7,16 @@ function Appointments() {
     const [donationCenters, setDonationCenters] = useState([]);
     const [editingAppointment, setEditingAppointment] = useState(null);
     const [creatingAppointment, setCreatingAppointment] = useState(null);
-    const [username, setUsername] = useState(localStorage.getItem('username') || '');
     const [userType, setUserType] = useState(localStorage.getItem('userType') || '');
     const [userID, setUserID] = useState(localStorage.getItem('userID') || '');
+    const [username, setUsername] = useState(localStorage.getItem('username') || '');
 
     useEffect(() => {
         if(userType === 'Donor'){
             getAppointmentsForDonor();
+        }
+        else if(userType==='Doctor'){
+            getDocAppointmets();
         }
         else {
             getAppointments();
@@ -38,6 +41,15 @@ function Appointments() {
         const response = await api.get(`/api/Appointments/userid/${userID}`);
         console.log(response.data.$values);
         setAppointments(response.data.$values);
+    }
+
+    async function getDocAppointmets() {
+        console.log(userID)
+        const response = await api.get(`/api/Doctors/${userID}`);
+        console.log(response.data);
+        const response2 = await api.get(`/api/Appointments/donationCenter/${response.data.donationCenterID}`);
+        console.log(response2.data.$values);
+        setAppointments(response2.data.$values);
     }
 
     async function handleDelete(id) {
@@ -79,6 +91,12 @@ function Appointments() {
                 appointment.statusA = 0;
             }
             const response = await api.post('/api/Appointments', appointment);
+            const userResponse = await api.get(`api/Donors/${userID}` )
+            const emailResponse = await api.post("/api/Mail", {
+                to: userResponse.data.email,
+                subject: "Appointment Confirmation",
+                body: `Dear ${username},\n\nThank you for booking an appointment with us. Your appointment has been scheduled for ${appointment.date}.\n\nBest regards,\nThe Blood App Team`
+            });
             setAppointments([...appointments, response.data]);
             setCreatingAppointment(null);
         } catch (err) {
@@ -135,7 +153,7 @@ function Appointments() {
                 </div>
             )}
             <p> </p>
-            {creatingAppointment && (
+            {userType==='Donor' && creatingAppointment && (
                 <div>
                     <h2>Create Appointment</h2>
                     <AppointmentForm appointment={creatingAppointment} donationCenters={donationCenters} handleSubmit={handleCreate} handleCancel={handleCancel} />

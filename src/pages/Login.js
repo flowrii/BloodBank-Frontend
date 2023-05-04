@@ -29,6 +29,12 @@ export default function Login({ setIsLoggedIn, setUsername, setUserType, setUser
                 setUserID(userResponse.data.donorID);
                 localStorage.setItem("userID", userResponse.data.donorID);
             }
+            if(userType==='Doctor') {
+                const userResponse=await api.get(`/api/Doctors/username/${usernameInput}`);
+                console.log(userResponse.data);
+                setUserID(userResponse.data.donorID);
+                localStorage.setItem("userID", userResponse.data.doctorID);
+            }
             setIsLoggedIn(true);
             setUsername(usernameInput);
             setUserType(userType);

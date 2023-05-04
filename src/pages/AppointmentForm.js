@@ -62,7 +62,6 @@ function AppointmentForm({ appointment, donationCenters, handleSubmit, handleCan
     const isDateAvailable = (date) => {
         let formattedDate=dayjs(date).format('YYYY-MM-DDTHH:mm:ss');
         const maxAppointments = maxApp;
-        console.log("DATAAAA", date)
         const appointmentsOnDate = appointments.filter((app) => app.date.slice(0,10) === formattedDate.slice(0,10));
         return (appointmentsOnDate.length < maxAppointments) && (date.getDay() !== 0) && (date.getDay() !== 6);
     };
