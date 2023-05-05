@@ -83,19 +83,24 @@ function Appointments() {
         }
     }
 
-    async function handleCreate(appointment) {
+    async function handleCreate(appointment, notificationType) {
         try {
             if(appointment.statusA==='1') {
                 appointment.statusA = 1;
             } else {
                 appointment.statusA = 0;
             }
+            if(notificationType==='0') {
+                notificationType = "Email";
+            } else {
+                notificationType = "SMS";
+            }
             const response = await api.post('/api/Appointments', appointment);
             const userResponse = await api.get(`api/Donors/${userID}` )
-            const emailResponse = await api.post("/api/Mail", {
-                to: userResponse.data.email,
-                subject: "Appointment Confirmation",
-                body: `Dear ${username},\n\nThank you for booking an appointment with us. Your appointment has been scheduled for ${appointment.date}.\n\nBest regards,\nThe Blood App Team`
+            const notificationResponse = await api.post(`/api/Notifications/${notificationType}`, {
+                to: notificationType==="Email"?userResponse.data.email:"+40735539291",
+                fromSubject: notificationType==="Email"?"Appointment Confirmation":"+13203027670",
+                body: `Dear ${username},\n\nThank you for making an appointment with us. Your appointment has been scheduled for ${appointment.date}.\n\nBest regards,\nThe BloodApp Team`
             });
             setAppointments([...appointments, response.data]);
             setCreatingAppointment(null);

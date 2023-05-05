@@ -15,6 +15,7 @@ function AppointmentForm({ appointment, donationCenters, handleSubmit, handleCan
     const [userType, setUserType] = useState(localStorage.getItem('userType') || '');
     const [appointments, setAppointments] = useState([]);
     const [maxApp, setMaxApp]=useState(0);
+    const [notificationType, setNotificationType] = useState('0');
 
     useEffect(() => {
         async function getAppointments() {
@@ -52,7 +53,7 @@ function AppointmentForm({ appointment, donationCenters, handleSubmit, handleCan
             donationCenterID,
             date,
             statusA
-        });
+        }, notificationType);
     };
 
     const cancelHandler = () => {
@@ -105,6 +106,13 @@ function AppointmentForm({ appointment, donationCenters, handleSubmit, handleCan
                     </LocalizationProvider>
                 </>
             )}
+            <label>
+                Notification Type:
+            </label>
+            <select value={notificationType} onChange={(e) => setNotificationType(e.target.value)}>
+                <option value='0'>Email</option>
+                <option value='1'>SMS</option>
+            </select>
 
 
             {(userType==='Doctor' || userType==='Admin') && (
@@ -117,6 +125,7 @@ function AppointmentForm({ appointment, donationCenters, handleSubmit, handleCan
                     <option value='1'>Confirmed</option>
                 </select>
             )}
+
             <p> </p>
             <p>
                 <button className={"edit-button"} type="submit">Save</button>
