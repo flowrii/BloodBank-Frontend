@@ -99,8 +99,10 @@ function Appointments() {
             const userResponse = await api.get(`api/Donors/${userID}` )
             const notificationResponse = await api.post(`/api/Notifications/${notificationType}`, {
                 to: notificationType==="Email"?userResponse.data.email:"+40735539291",
-                fromSubject: notificationType==="Email"?"Appointment Confirmation":"+13203027670",
-                body: `Dear ${username},\n\nThank you for making an appointment with us. Your appointment has been scheduled for ${appointment.date}.\n\nBest regards,\nThe BloodApp Team`
+                fromSubject: notificationType==="Email"?"Your Appointment with us":"+13203027670",
+                body: `Dear ${username},\n\nThank you for making an appointment with us. Your appointment has been scheduled for ${appointment.date}.\n\nBest regards,\nThe BloodApp Team`,
+                appointmentId: appointment.id,
+                date: appointment.date
             });
             setAppointments([...appointments, response.data]);
             setCreatingAppointment(null);
