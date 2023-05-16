@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from './api';
 import AppointmentForm from './AppointmentForm';
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import {Button} from "@mui/material";
+import autoTable from "jspdf-autotable";
 
 function Appointments() {
     const [appointments, setAppointments] = useState([]);
@@ -10,8 +14,19 @@ function Appointments() {
     const [userType, setUserType] = useState(localStorage.getItem('userType') || '');
     const [userID, setUserID] = useState(localStorage.getItem('userID') || '');
     const [username, setUsername] = useState(localStorage.getItem('username') || '');
+    const [donorNames, setDonorNames] = useState({});
 
     useEffect(() => {
+        const fetchDonorNames = async () => {
+            const donorIDs = appointments.map((appointment) => appointment.donorID);
+            const names = await Promise.all(donorIDs.map((id) => getName(id)));
+            const donorNamesMap = donorIDs.reduce((namesMap, id, index) => {
+                namesMap[id] = names[index];
+                return namesMap;
+            }, {});
+            setDonorNames(donorNamesMap);
+        };
+
         if(userType === 'Donor'){
             getAppointmentsForDonor();
         }
@@ -22,6 +37,7 @@ function Appointments() {
             getAppointments();
         }
         getDonationCenters();
+        fetchDonorNames();
     }, []);
 
     async function getAppointments() {
@@ -43,6 +59,16 @@ function Appointments() {
         setAppointments(response.data.$values);
     }
 
+    async function printDocument() {
+        const input = document.getElementById('pdfdiv');
+        // Create a new jsPDF instance
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        // Generate the table using autoTable plugin
+        autoTable(pdf, { html: input });
+        // Save the PDF
+        pdf.save('appointments.pdf');
+    }
+
     async function getDocAppointmets() {
         console.log(userID)
         const response = await api.get(`/api/Doctors/${userID}`);
@@ -50,6 +76,20 @@ function Appointments() {
         const response2 = await api.get(`/api/Appointments/donationCenter/${response.data.donationCenterID}`);
         console.log(response2.data.$values);
         setAppointments(response2.data.$values);
+    }
+
+    async function getName(id) {
+        if (donorNames[id]) {
+            return donorNames[id];
+        } else {
+            const response = await api.get(`/api/Donors/name/${id}`);
+            const name = response.data;
+            setDonorNames((prevDonorNames) => ({
+                ...prevDonorNames,
+                [id]: name,
+            }));
+            return name;
+        }
     }
 
     async function handleDelete(id) {
@@ -119,14 +159,14 @@ function Appointments() {
     return (
         <div>
             <h1>Appointments</h1>
-            <table>
+            <table id="pdfdiv" className="txt">
                 <thead>
                 <tr>
                     <th>ID</th>
-                    <th>DonorID</th>
+                    <th>Donor</th>
                     <th>DonationCenterID</th>
                     <th>Date</th>
-                    <th>StatusA</th>
+                    <th>Status</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -134,7 +174,7 @@ function Appointments() {
                 {appointments?.map((appointment) => (
                     <tr key={appointment.id}>
                         <td>{appointment.id}</td>
-                        <td>{appointment.donorID}</td>
+                        <td>{donorNames[appointment.donorID]}</td>
                         <td>{appointment.donationCenterID}</td>
                         <td>{appointment.date}</td>
                         <td>{appointment.statusA === 1 ? "Confirmed" : "Pending"} </td>
@@ -153,6 +193,11 @@ function Appointments() {
                 ))}
                 </tbody>
             </table>
+            {userType==='Doctor' && (
+                <Button onClick={printDocument} variant="contained" color="primary">
+                    Generate Pdf
+                </Button>
+            )}
             {editingAppointment && (
                 <div>
                     <h2>Edit Appointment</h2>
