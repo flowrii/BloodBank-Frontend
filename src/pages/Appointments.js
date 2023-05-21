@@ -3,7 +3,7 @@ import api from './api';
 import AppointmentForm from './AppointmentForm';
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import {Button} from "@mui/material";
+import {Button, Pagination} from "@mui/material";
 import autoTable from "jspdf-autotable";
 
 function Appointments() {
@@ -15,6 +15,8 @@ function Appointments() {
     const [userID, setUserID] = useState(localStorage.getItem('userID') || '');
     const [username, setUsername] = useState(localStorage.getItem('username') || '');
     const [donorNames, setDonorNames] = useState({});
+    const [appNumber, setAppNumber]=useState(0);
+    const [crtPage, setCurrentPage]=useState(1);
 
     useEffect(() => {
         const fetchDonorNames = async () => {
@@ -31,6 +33,7 @@ function Appointments() {
             getAppointmentsForDonor();
         }
         else if(userType==='Doctor'){
+            getAppNumber();
             getDocAppointmets();
         }
         else {
@@ -38,7 +41,7 @@ function Appointments() {
         }
         getDonationCenters();
         fetchDonorNames();
-    }, []);
+    }, [appointments]);
 
     async function getAppointments() {
         const response = await api.get('/api/Appointments');
@@ -69,11 +72,20 @@ function Appointments() {
         pdf.save('appointments.pdf');
     }
 
+    async function getAppNumber(){
+        console.log(userID)
+        const response = await api.get(`/api/Doctors/${userID}`);
+        console.log(response.data);
+        const response2 = await api.get(`/api/Appointments/donationCenterApp/${response.data.donationCenterID}`);
+        console.log(response2.data);
+        setAppNumber(response2.data);
+    }
+
     async function getDocAppointmets() {
         console.log(userID)
         const response = await api.get(`/api/Doctors/${userID}`);
         console.log(response.data);
-        const response2 = await api.get(`/api/Appointments/donationCenter/${response.data.donationCenterID}`);
+        const response2 = await api.get(`/api/Appointments/donationCenter/${response.data.donationCenterID}/${(crtPage-1)*3}`);
         console.log(response2.data.$values);
         setAppointments(response2.data.$values);
     }
@@ -193,6 +205,13 @@ function Appointments() {
                 ))}
                 </tbody>
             </table>
+            {userType==='Doctor' && (
+            <Pagination count={(appNumber/3)} onChange={(e, v) => {
+                setCurrentPage(v);
+                console.log(crtPage);
+            }
+            }/>
+            )}
             {userType==='Doctor' && (
                 <Button onClick={printDocument} variant="contained" color="primary">
                     Generate Pdf

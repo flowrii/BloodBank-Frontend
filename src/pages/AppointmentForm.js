@@ -7,7 +7,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 
 function AppointmentForm({ appointment, donationCenters, handleSubmit, handleCancel }) {
-    const [donorID, setDonorID] = useState(appointment?.donorID ?? '');
+    const [donorID, setDonorID] = useState(appointment?.donorID ?? null);
     const [donationCenterID, setDonationCenterID] = useState(appointment?.donationCenterID ?? '');
     console.log("donationCenter", donationCenterID)
     const [date, setDate] = useState(appointment?.date ?? '');
@@ -16,6 +16,7 @@ function AppointmentForm({ appointment, donationCenters, handleSubmit, handleCan
     const [appointments, setAppointments] = useState([]);
     const [maxApp, setMaxApp]=useState(0);
     const [notificationType, setNotificationType] = useState('0');
+    const [nextAppointment, setNextAppointment] = useState(dayjs());
 
     useEffect(() => {
         async function getAppointments() {
@@ -39,9 +40,18 @@ function AppointmentForm({ appointment, donationCenters, handleSubmit, handleCan
             }
         }
 
+        async function getNextAppointment(){
+            if(donorID) {
+                const response = await api.get(`/api/Appointments/nextAppointment/${donorID}`)
+                console.log(response.data)
+                setNextAppointment(response.data);
+            }
+        }
+
         if (donationCenterID) {
             getAppointments();
             getDonationCenter();
+            getNextAppointment();
         }
     }, [donationCenterID]);
 
@@ -64,7 +74,9 @@ function AppointmentForm({ appointment, donationCenters, handleSubmit, handleCan
         let formattedDate=dayjs(date).format('YYYY-MM-DDTHH:mm:ss');
         const maxAppointments = maxApp;
         const appointmentsOnDate = appointments.filter((app) => app.date.slice(0,10) === formattedDate.slice(0,10));
-        return (appointmentsOnDate.length < maxAppointments) && (date.getDay() !== 0) && (date.getDay() !== 6);
+        let nextAvailable=dayjs(nextAppointment?.date);
+        console.log("NEXT",nextAvailable);
+        return (appointmentsOnDate.length < maxAppointments) && (date.getDay() !== 0) && (date.getDay() !== 6) && (date>nextAvailable);
     };
 
     return (
